@@ -2,43 +2,39 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 	"unicode"
-
-	"golang.org/x/example/stringutil"
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
-func Unpack(s string) (string, error) {
-	var err error
-	var b strings.Builder
-	if len(s) == 0 {
-		return "", nil
-	}
+func Unpack(input string) (string, error) {
+	var sb strings.Builder
+	var prevValue rune
+	var prevIsLetter bool
+	var currentValue rune
+	var currentIsLetter bool
+	for i, val := range input {
+		currentValue = val
+		currentIsLetter = unicode.IsLetter(val)
 
-	if unicode.IsDigit(rune(s[0])) {
-		return "", ErrInvalidString
-	}
-	s = stringutil.Reverse(s)
-	tmp := rune(s[0])
-	counter := 1
-	for _, r := range s {
-		if unicode.IsDigit(r) {
-			if unicode.IsDigit(tmp) {
+		if unicode.IsDigit(val) {
+			if prevIsLetter {
+				sb.WriteString(strings.Repeat(string(prevValue), int(currentValue-'0')))
+			} else {
 				return "", ErrInvalidString
 			}
-			counter, err = strconv.Atoi(string(r))
-			if err != nil {
-				return "", err
-			}
-		} else {
-			b.WriteString(strings.Repeat(string(r), counter))
-			counter = 1
+		} else if prevIsLetter {
+			sb.WriteRune(prevValue)
 		}
-		tmp = r
+
+		if currentIsLetter && i == len(input)-1 {
+			sb.WriteRune(currentValue)
+		}
+
+		prevValue = currentValue
+		prevIsLetter = currentIsLetter
 	}
 
-	return stringutil.Reverse(b.String()), nil
+	return sb.String(), nil
 }
